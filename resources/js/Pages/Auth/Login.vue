@@ -1,5 +1,5 @@
 <script setup>
-import { useForm, Link } from "@inertiajs/vue3";
+import { Head, useForm, Link, usePage } from "@inertiajs/vue3";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,8 @@ import InputError from "@/components/InputError.vue";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 
 defineOptions({ layout: GuestLayout });
+
+const appName = usePage().props.appName;
 
 const form = useForm({
   email: "",
@@ -25,6 +27,9 @@ const submit = () => {
 </script>
 
 <template>
+  <Head>
+    <title>Masuk | {{ appName }}</title>
+  </Head>
   <div class="w-full max-w-md">
     <Card class="shadow-lg">
       <CardHeader>

@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch } from "vue";
-import { router } from "@inertiajs/vue3";
+import { Head, router, usePage } from "@inertiajs/vue3";
 import { Eye, Search, Target, Users, X } from "@lucide/vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,8 @@ const props = defineProps({
   pelatihan: { type: Object, required: true },
   filters: { type: Object, default: () => ({}) },
 });
+
+const appName = usePage().props.appName;
 
 const kategoriLabels = {
   technical: "Technical",
@@ -119,11 +121,14 @@ const selectClass =
 </script>
 
 <template>
+  <Head>
+    <title>Target Pelatihan | {{ appName }}</title>
+  </Head>
   <div class="flex flex-col gap-6">
     <div>
-      <h1 class="text-2xl font-bold tracking-tight">Mapping Target Pelatihan</h1>
+      <h1 class="text-2xl font-bold tracking-tight">Pemetaan Target Pelatihan</h1>
       <p class="text-muted-foreground">
-        Ringkasan target pelatihan hasil mesin perhitungan otomatis, dikelompokkan berdasarkan program diklat.
+        Ringkasan target pelatihan.
       </p>
     </div>
 
@@ -252,8 +257,8 @@ const selectClass =
     </Card>
 
     <Dialog v-model:open="dialogOpen">
-      <DialogContent class="sm:max-w-5xl">
-        <DialogHeader>
+      <DialogContent class="flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl">
+        <DialogHeader class="border-b px-6 pt-6 pb-4">
           <DialogTitle>{{ selected?.judul }}</DialogTitle>
           <DialogDescription>
             {{ selected?.kode_diklat }} • {{ selected?.jenjang || "Semua Jenjang" }} • {{ selected?.subsektor }}
@@ -261,39 +266,45 @@ const selectClass =
           </DialogDescription>
         </DialogHeader>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nama &amp; NIP</TableHead>
-              <TableHead>Jabatan &amp; Jenjang</TableHead>
-              <TableHead>Unit Kerja</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow v-for="e in employees" :key="e.id">
-              <TableCell>
-                <p class="font-medium">{{ e.nama }}</p>
-                <p class="text-muted-foreground font-mono text-xs">{{ e.nip }}</p>
-              </TableCell>
-              <TableCell>
-                <p>{{ e.jabatan }}</p>
-                <p class="text-muted-foreground text-xs">Jenjang {{ e.jenjang }}</p>
-              </TableCell>
-              <TableCell>{{ e.unit_kerja }}</TableCell>
-              <TableCell>
-                <Badge :variant="statusVariant[e.status] ?? 'muted'">
-                  {{ e.status === "ditargetkan" ? "Ditargetkan" : e.status === "sedang_proses" ? "Sedang Proses" : "Selesai" }}
-                </Badge>
-              </TableCell>
-            </TableRow>
-            <TableRow v-if="!employees.length">
-              <TableCell colspan="4" class="h-24 text-center text-muted-foreground">
-                Tidak ada pegawai yang ditargetkan pada pelatihan ini.
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
+        <div class="w-full min-w-0 flex-1 min-h-0 px-6 pb-6">
+          <div
+            class="max-h-[70vh] min-h-0 w-full overflow-x-auto overflow-y-auto rounded-md border"
+          >
+            <table class="w-full min-w-[700px] caption-bottom text-sm">
+              <TableHeader class="sticky top-0 z-10 bg-background">
+                <TableRow>
+                  <TableHead>Nama &amp; NIP</TableHead>
+                  <TableHead>Jabatan &amp; Jenjang</TableHead>
+                  <TableHead>Unit Kerja</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow v-for="e in employees" :key="e.id">
+                  <TableCell>
+                    <p class="font-medium">{{ e.nama }}</p>
+                    <p class="text-muted-foreground font-mono text-xs">{{ e.nip }}</p>
+                  </TableCell>
+                  <TableCell>
+                    <p>{{ e.jabatan }}</p>
+                    <p class="text-muted-foreground text-xs">Jenjang {{ e.jenjang }}</p>
+                  </TableCell>
+                  <TableCell>{{ e.unit_kerja }}</TableCell>
+                  <TableCell>
+                    <Badge :variant="statusVariant[e.status] ?? 'muted'">
+                      {{ e.status === "ditargetkan" ? "Ditargetkan" : e.status === "sedang_proses" ? "Sedang Proses" : "Selesai" }}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+                <TableRow v-if="!employees.length">
+                  <TableCell colspan="4" class="h-24 text-center text-muted-foreground">
+                    Tidak ada pegawai yang ditargetkan pada pelatihan ini.
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </table>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   </div>

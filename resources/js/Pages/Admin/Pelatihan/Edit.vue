@@ -1,9 +1,11 @@
 <script setup>
-import { useForm } from "@inertiajs/vue3";
+import { Head, useForm, usePage } from "@inertiajs/vue3";
 import AppLayout from "@/Layouts/AppLayout.vue";
 import PelatihanForm from "./Form.vue";
 
 defineOptions({ layout: AppLayout });
+
+const appName = usePage().props.appName;
 
 const props = defineProps({
   pelatihan: { type: Object, required: true },
@@ -29,6 +31,9 @@ const submit = () => {
 </script>
 
 <template>
+  <Head>
+    <title>Edit Pelatihan | {{ appName }}</title>
+  </Head>
   <PelatihanForm
     :form="form"
     :kategori-options="kategoriOptions"

@@ -1,5 +1,5 @@
 <script setup>
-import { usePage } from "@inertiajs/vue3";
+import { Head, usePage } from "@inertiajs/vue3";
 import { Users, UserPlus, UserCheck } from "@lucide/vue";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ defineProps({
 
 const page = usePage();
 const user = page.props.auth?.user;
+const appName = page.props.appName;
 
 const today = new Date().toLocaleDateString("id-ID", {
   weekday: "long",
@@ -47,6 +48,9 @@ const statCards = [
 </script>
 
 <template>
+  <Head>
+    <title>Dashboard | {{ appName }}</title>
+  </Head>
   <div class="flex flex-col gap-6">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">

@@ -56,18 +56,16 @@ const displayName = user?.pegawai?.nama ?? user?.name;
 
 <template>
   <div class="min-h-screen bg-muted/40">
-    <header class="sticky top-0 z-40 h-16 border-b bg-background">
+    <header class="sticky top-0 z-40 h-16 border-b bg-white">
       <div class="flex h-full items-center justify-between px-4 md:px-6">
         <Link :href="user?.role === 'admin' ? '/admin/dashboard' : '/pegawai/profile'" class="flex items-center gap-2 text-lg font-bold tracking-tight">
-          <span class="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Activity class="size-4" />
-          </span>
+          <img src="/images/logo-esdm.png" class="w-8 h-8" alt="" srcset="">
           <span class="hidden sm:inline">{{ appName }}</span>
         </Link>
 
         <div class="flex items-center gap-3">
           <div class="hidden items-center gap-3 md:flex">
-            <div class="flex size-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+            <div class="flex size-9 items-center justify-center rounded-full bg-amber-100 text-sm font-semibold text-amber-700">
               {{ displayName?.charAt(0)?.toUpperCase() }}
             </div>
             <div class="leading-tight">
@@ -84,14 +82,14 @@ const displayName = user?.pegawai?.nama ?? user?.name;
     </header>
 
     <div class="mx-auto flex max-w-7xl">
-      <aside class="hidden w-64 shrink-0 flex-col gap-1 px-4 py-6 md:flex">
+      <aside class="hidden h-fit w-64 shrink-0 flex-col gap-1 self-start rounded-xl borde px-3 py-6 md:flex">
         <template v-for="item in navItems" :key="item.href">
           <Link
             :href="item.href"
             :class="
               'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
               $page.url.split('#')[0] === item.href.split('#')[0]
-                ? 'bg-primary text-primary-foreground'
+                ? 'bg-amber-100 font-semibold text-amber-900'
                 : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
             "
           >
@@ -101,7 +99,7 @@ const displayName = user?.pegawai?.nama ?? user?.name;
         </template>
         <Separator class="my-4" />
         <div class="flex items-center gap-3 rounded-lg border bg-background p-3">
-          <div class="flex size-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+          <div class="flex size-9 items-center justify-center rounded-full bg-amber-100 text-sm font-semibold text-amber-700">
             {{ displayName?.charAt(0)?.toUpperCase() }}
           </div>
           <div class="min-w-0 leading-tight">

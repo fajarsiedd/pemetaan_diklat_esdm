@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
             ['email' => 'admin@example.com'],
             [
                 'name' => 'Administrator',
-                'password' => 'password',
+                'password' => '123456',
                 'role' => 'admin',
             ],
         );
@@ -57,7 +57,7 @@ class DatabaseSeeder extends Seeder
                 ['email' => $data['email']],
                 [
                     'name' => $data['name'],
-                    'password' => 'password',
+                    'password' => '123456',
                     'role' => 'pegawai',
                 ],
             );

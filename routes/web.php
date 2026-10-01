@@ -39,6 +39,7 @@ Route::middleware('auth')->group(function () {
                     Route::get('/', 'index')->name('index');
                     Route::get('/create', 'create')->name('create');
                     Route::post('/', 'store')->name('store');
+                    Route::post('/import', 'import')->name('import');
                     Route::get('/{pegawai}/profile', 'edit')->name('edit');
                     Route::put('/{pegawai}', 'update')->name('update');
                     Route::delete('/{pegawai}', 'destroy')->name('destroy');

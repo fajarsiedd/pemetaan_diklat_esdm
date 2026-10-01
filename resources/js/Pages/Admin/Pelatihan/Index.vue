@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch } from "vue";
-import { router, useForm } from "@inertiajs/vue3";
-import { Link } from "@inertiajs/vue3";
+import { router, useForm, usePage } from "@inertiajs/vue3";
+import { Head, Link } from "@inertiajs/vue3";
 import { Plus, Pencil, Trash2, Search, Upload } from "@lucide/vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,8 @@ const props = defineProps({
   pelatihan: { type: Object, required: true },
   filters: { type: Object, default: () => ({}) },
 });
+
+const appName = usePage().props.appName;
 
 const kategoriLabels = {
   technical: "Technical",
@@ -65,6 +67,9 @@ const submitImport = () => {
 </script>
 
 <template>
+  <Head>
+    <title>Master Pelatihan | {{ appName }}</title>
+  </Head>
   <div class="flex flex-col gap-6">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>

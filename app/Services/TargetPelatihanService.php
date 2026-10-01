@@ -88,8 +88,10 @@ class TargetPelatihanService
 
     /**
      * Build a priority-ordered collection of pelatihan for a cohort group.
-     * Quorum priority: trainings with the largest pool of uncompleted
-     * employees are ranked first to maximise class size.
+     * Ordering rules:
+     *  1. Training status priority: "Wajib" always ranks above "Opsional".
+     *  2. Same status: trainings with the largest pool of uncompleted
+     *     employees are ranked first to maximise class size.
      *
      * Eligibility mirrors the Grand Design rule seen by employees:
      *  - target_jabatan must contain the group's jabatan (JSON match), AND
@@ -126,8 +128,25 @@ class TargetPelatihanService
                 ];
             })
             ->filter(fn ($item) => $item->uncompleted > 0)
-            ->sortByDesc('uncompleted')
+            ->sort(function (object $a, object $b) {
+                $statusOrder = $this->statusPriority($a->pelatihan->status)
+                    <=> $this->statusPriority($b->pelatihan->status);
+
+                if ($statusOrder !== 0) {
+                    return $statusOrder;
+                }
+
+                return $b->uncompleted <=> $a->uncompleted;
+            })
             ->values();
+    }
+
+    /**
+     * "Wajib" trainings must always rank ahead of "Opsional" ones.
+     */
+    protected function statusPriority(string $status): int
+    {
+        return $status === 'wajib' ? 0 : 1;
     }
 
     /**
