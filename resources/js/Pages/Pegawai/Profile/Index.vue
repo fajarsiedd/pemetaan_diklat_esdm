@@ -1,5 +1,5 @@
 <script setup>
-import { useForm } from "@inertiajs/vue3";
+import { Head, useForm, usePage } from "@inertiajs/vue3";
 import { AlertTriangle } from "@lucide/vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,8 @@ const props = defineProps({
   riwayat: { type: Array, default: () => [] },
   grandDesign: { type: Array, default: () => [] },
 });
+
+const appName = usePage().props.appName;
 
 const JABATAN_OPTIONS = ["Inspektur Ketenagalistrikan", "Penyelidik Bumi"];
 const JENJANG_OPTIONS = ["Ahli Pertama", "Ahli Muda", "Ahli Madya", "Ahli Madya-Pusaka"];
@@ -44,6 +46,9 @@ const selectClass =
 </script>
 
 <template>
+  <Head>
+    <title>Profil Saya | {{ appName }}</title>
+  </Head>
   <div class="flex flex-col gap-6">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Profil Saya</h1>

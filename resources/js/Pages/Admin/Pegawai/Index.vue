@@ -1,11 +1,16 @@
 <script setup>
 import { ref, watch } from "vue";
-import { router } from "@inertiajs/vue3";
-import { Link } from "@inertiajs/vue3";
-import { Plus, Pencil, Trash2, Search } from "@lucide/vue";
+import { router, useForm, usePage } from "@inertiajs/vue3";
+import { Head, Link } from "@inertiajs/vue3";
+import { Plus, Pencil, Trash2, Search, Upload } from "@lucide/vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+  DialogFooter, DialogClose,
+} from "@/components/ui/dialog";
 import Badge from "@/components/Badge.vue";
 import Pagination from "@/components/Pagination.vue";
 import AppLayout from "@/Layouts/AppLayout.vue";
@@ -14,8 +19,10 @@ defineOptions({ layout: AppLayout });
 
 const props = defineProps({
   pegawai: { type: Object, required: true },
-  filters: { type: Object, default: () => ({}) },
+  filters: { type: Object, default: () => ({ }) },
 });
+
+const appName = usePage().props.appName;
 
 const search = ref(props.filters.search ?? "");
 
@@ -36,19 +43,81 @@ const destroy = (p) => {
     router.delete(`/admin/pegawai/${p.id}`, { preserveScroll: true });
   }
 };
+
+const importOpen = ref(false);
+const importForm = useForm({ file: null });
+
+const submitImport = () => {
+  importForm.post("/admin/pegawai/import", {
+    forceFormData: true,
+    preserveScroll: true,
+    onSuccess: () => {
+      importOpen.value = false;
+      importForm.reset();
+    },
+  });
+};
 </script>
 
 <template>
+  <Head>
+    <title>Master Pegawai | {{ appName }}</title>
+  </Head>
   <div class="flex flex-col gap-6">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h1 class="text-2xl font-bold tracking-tight">Data Pegawai</h1>
         <p class="text-muted-foreground">Kelola profil inspektur dan penyelidik bumi</p>
       </div>
-      <Link :href="'/admin/pegawai/create'">
-        <Button><Plus class="size-4" /> Tambah Pegawai</Button>
-      </Link>
+      <div class="flex items-center gap-2">
+        <Button variant="outline" @click="importOpen = true">
+          <Upload class="size-4" /> Import Excel
+        </Button>
+        <Link :href="'/admin/pegawai/create'">
+          <Button><Plus class="size-4" /> Tambah Pegawai</Button>
+        </Link>
+      </div>
     </div>
+
+    <Dialog v-model:open="importOpen">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Import Data Pegawai</DialogTitle>
+          <DialogDescription>
+            Unggah file Excel (.xlsx, .xls, atau .csv). Kolom yang dibutuhkan:
+            Nama Lengkap, NIP, Jabatan, Jenjang, Unit Kerja, Provinsi. Akun login
+            dibuat otomatis (email = NIP@mail.com, password default 123456).
+          </DialogDescription>
+        </DialogHeader>
+        <div class="flex flex-col gap-4">
+          <div class="flex flex-col gap-2">
+            <Label for="import-file">File Excel</Label>
+            <Input
+              id="import-file"
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              @input="importForm.file = $event.target.files[0]"
+            />
+          </div>
+          <p v-if="importForm.errors.file" class="text-sm text-destructive">
+            {{ importForm.errors.file }}
+          </p>
+        </div>
+        <DialogFooter>
+          <DialogClose as-child>
+            <Button type="button" variant="outline">Batal</Button>
+          </DialogClose>
+          <Button
+            type="button"
+            :disabled="importForm.processing || !importForm.file"
+            @click="submitImport"
+          >
+            <Upload class="size-4" />
+            {{ importForm.processing ? "Mengimpor..." : "Import" }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <Card>
       <CardHeader class="flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

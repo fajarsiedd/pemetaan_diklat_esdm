@@ -1,10 +1,12 @@
 <script setup>
-import { useForm } from "@inertiajs/vue3";
+import { Head, useForm, usePage } from "@inertiajs/vue3";
 import AppLayout from "@/Layouts/AppLayout.vue";
 import PegawaiForm from "./Form.vue";
 import PegawaiTraining from "@/components/PegawaiTraining.vue";
 
 defineOptions({ layout: AppLayout });
+
+const appName = usePage().props.appName;
 
 const props = defineProps({
   pegawai: { type: Object, required: true },
@@ -36,6 +38,9 @@ const riwayatDownloadUrl = (item) => `/admin/pegawai/${props.pegawai.id}/riwayat
 </script>
 
 <template>
+  <Head>
+    <title>Edit Pegawai | {{ appName }}</title>
+  </Head>
   <div class="flex flex-col gap-6">
     <PegawaiForm
       :form="form"

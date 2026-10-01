@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Imports\PegawaiImport;
 use App\Models\Pegawai;
 use App\Models\Pelatihan;
 use App\Models\RiwayatPelatihan;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AdminPegawaiController extends Controller
 {
@@ -145,7 +147,7 @@ class AdminPegawaiController extends Controller
         $user = User::create([
             'name' => $validated['nama'],
             'email' => $validated['email'],
-            'password' => 'password',
+            'password' => '123456',
             'role' => 'pegawai',
         ]);
 
@@ -195,5 +197,16 @@ class AdminPegawaiController extends Controller
         return redirect()
             ->route('admin.pegawai.index')
             ->with('success', 'Pegawai berhasil dihapus.');
+    }
+
+    public function import(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:2048'],
+        ]);
+
+        Excel::import(new PegawaiImport, $validated['file']);
+
+        return back()->with('success', 'Data pegawai berhasil diimpor dari Excel.');
     }
 }

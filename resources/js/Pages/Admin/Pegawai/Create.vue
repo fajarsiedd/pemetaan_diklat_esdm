@@ -1,9 +1,11 @@
 <script setup>
-import { useForm } from "@inertiajs/vue3";
+import { Head, useForm, usePage } from "@inertiajs/vue3";
 import AppLayout from "@/Layouts/AppLayout.vue";
 import PegawaiForm from "./Form.vue";
 
 defineOptions({ layout: AppLayout });
+
+const appName = usePage().props.appName;
 
 const props = defineProps({
   jabatanOptions: { type: Array, default: () => [] },
@@ -26,6 +28,9 @@ const submit = () => {
 </script>
 
 <template>
+  <Head>
+    <title>Tambah Pegawai | {{ appName }}</title>
+  </Head>
   <PegawaiForm
     :form="form"
     :jabatan-options="jabatanOptions"
