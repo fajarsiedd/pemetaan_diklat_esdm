@@ -8,25 +8,49 @@ use App\Models\Pelatihan;
 use App\Models\RiwayatPelatihan;
 use App\Models\TargetPelatihan;
 use App\Services\TargetPelatihanService;
+use App\Support\GlobalFilters;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Throwable;
 
 class AdminDashboardController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $totalPegawai = Pegawai::count();
-        $totalPelatihan = Pelatihan::count();
-        $totalTarget = TargetPelatihan::where('status', '!=', 'selesai')->count();
-        $totalRiwayat = RiwayatPelatihan::count();
+        $jabatan = $request->string('jabatan')->toString();
+        $jenjang = $request->string('jenjang')->toString();
+
+        $filtersActive = GlobalFilters::active($jabatan) || GlobalFilters::active($jenjang);
+
+        $totalPegawai = GlobalFilters::applyToPegawai(Pegawai::query(), $jabatan, $jenjang)->count();
+
+        $totalPelatihan = GlobalFilters::applyToPelatihan(Pelatihan::query(), $jabatan, $jenjang)->count();
+
+        $totalTarget = TargetPelatihan::query()
+            ->where('status', '!=', 'selesai')
+            ->when($filtersActive, function (Builder $query) use ($jabatan, $jenjang) {
+                $query->whereHas('pegawai', fn (Builder $q) => GlobalFilters::applyToPegawai($q, $jabatan, $jenjang));
+            })
+            ->count();
+
+        $totalRiwayat = RiwayatPelatihan::query()
+            ->when($filtersActive, function (Builder $query) use ($jabatan, $jenjang) {
+                $query->whereHas('pegawai', fn (Builder $q) => GlobalFilters::applyToPegawai($q, $jabatan, $jenjang));
+            })
+            ->count();
 
         $completionRate = ($totalTarget + $totalRiwayat) > 0
             ? (int) round(($totalRiwayat / ($totalTarget + $totalRiwayat)) * 100)
             : 0;
 
         return Inertia::render('Admin/Dashboard/Index', [
+            'filters' => [
+                'jabatan' => $jabatan,
+                'jenjang' => $jenjang,
+            ],
             'stats' => [
                 'total_pegawai' => $totalPegawai,
                 'total_pelatihan' => $totalPelatihan,
@@ -35,10 +59,10 @@ class AdminDashboardController extends Controller
                 'completion_rate' => $completionRate,
             ],
             'charts' => [
-                'employeeDistribution' => $this->employeeDistribution(),
-                'trainingCategories' => $this->trainingCategories(),
-                'trainingStatusRatio' => $this->trainingStatusRatio(),
-                'topTargetedTrainings' => $this->topTargetedTrainings(),
+                'employeeDistribution' => $this->employeeDistribution($jabatan, $jenjang),
+                'trainingCategories' => $this->trainingCategories($jabatan, $jenjang),
+                'trainingStatusRatio' => $this->trainingStatusRatio($jabatan, $jenjang),
+                'topTargetedTrainings' => $this->topTargetedTrainings($jabatan, $jenjang),
             ],
         ]);
     }
@@ -48,25 +72,27 @@ class AdminDashboardController extends Controller
      *
      * @return array{categories: array<int, string>, series: array<int, array{name: string, data: array<int, int>}>}
      */
-    protected function employeeDistribution(): array
+    protected function employeeDistribution(?string $jabatan, ?string $jenjang): array
     {
-        $jabatan = Pegawai::query()->distinct()->orderBy('jabatan')->pluck('jabatan');
-        $jenjang = Pegawai::query()->distinct()->orderBy('jenjang')->pluck('jenjang');
+        $base = GlobalFilters::applyToPegawai(Pegawai::query(), $jabatan, $jenjang);
 
-        $counts = Pegawai::query()
+        $positions = (clone $base)->distinct()->orderBy('jabatan')->pluck('jabatan');
+        $levels = (clone $base)->distinct()->orderBy('jenjang')->pluck('jenjang');
+
+        $counts = (clone $base)
             ->selectRaw('jabatan, jenjang, COUNT(*) as total')
             ->groupBy('jabatan', 'jenjang')
             ->get()
             ->keyBy(fn ($row) => $row->jabatan.'|'.$row->jenjang)
             ->mapWithKeys(fn ($row, $key) => [$key => (int) $row->total]);
 
-        $series = $jenjang->map(fn (string $level) => [
+        $series = $levels->map(fn (string $level) => [
             'name' => $level,
-            'data' => $jabatan->map(fn (string $position) => $counts[$position.'|'.$level] ?? 0)->all(),
+            'data' => $positions->map(fn (string $position) => $counts[$position.'|'.$level] ?? 0)->all(),
         ])->values()->all();
 
         return [
-            'categories' => $jabatan->values()->all(),
+            'categories' => $positions->values()->all(),
             'series' => $series,
         ];
     }
@@ -76,7 +102,7 @@ class AdminDashboardController extends Controller
      *
      * @return array{labels: array<int, string>, series: array<int, int>}
      */
-    protected function trainingCategories(): array
+    protected function trainingCategories(?string $jabatan, ?string $jenjang): array
     {
         $labels = [
             'technical' => 'Technical',
@@ -85,7 +111,7 @@ class AdminDashboardController extends Controller
             'soft_skill' => 'Soft Skill',
         ];
 
-        $counts = Pelatihan::query()
+        $counts = GlobalFilters::applyToPelatihan(Pelatihan::query(), $jabatan, $jenjang)
             ->selectRaw('kategori, COUNT(*) as total')
             ->groupBy('kategori')
             ->pluck('total', 'kategori')
@@ -107,9 +133,9 @@ class AdminDashboardController extends Controller
      *
      * @return array{labels: array<int, string>, series: array<int, int>}
      */
-    protected function trainingStatusRatio(): array
+    protected function trainingStatusRatio(?string $jabatan, ?string $jenjang): array
     {
-        $counts = Pelatihan::query()
+        $counts = GlobalFilters::applyToPelatihan(Pelatihan::query(), $jabatan, $jenjang)
             ->selectRaw('status, COUNT(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status')
@@ -126,11 +152,14 @@ class AdminDashboardController extends Controller
      *
      * @return array<int, array{judul: string, kode_diklat: string, kategori: string, count: int}>
      */
-    protected function topTargetedTrainings(): array
+    protected function topTargetedTrainings(?string $jabatan, ?string $jenjang): array
     {
         return Pelatihan::query()
-            ->withCount(['targetPelatihan as assigned_count' => function ($query) {
+            ->withCount(['targetPelatihan as assigned_count' => function ($query) use ($jabatan, $jenjang) {
                 $query->where('status', '!=', 'selesai');
+                $query->when(GlobalFilters::active($jabatan) || GlobalFilters::active($jenjang), function (Builder $q) use ($jabatan, $jenjang) {
+                    $q->whereHas('pegawai', fn (Builder $w) => GlobalFilters::applyToPegawai($w, $jabatan, $jenjang));
+                });
             }])
             ->orderByDesc('assigned_count')
             ->limit(5)

@@ -11,6 +11,7 @@ use App\Models\TargetPelatihan;
 use App\Models\User;
 use App\Services\RiwayatPelatihanService;
 use App\Services\TargetPelatihanService;
+use App\Support\GlobalFilters;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -23,13 +24,22 @@ class AdminPegawaiController extends Controller
 {
     public function index(Request $request): Response
     {
-        $pegawai = Pegawai::query()
-            ->with('user')
-            ->when($request->search, function ($query, $search) {
-                $query->where('nama', 'like', "%{$search}%")
-                    ->orWhere('nip', 'like', "%{$search}%")
-                    ->orWhere('jabatan', 'like', "%{$search}%");
-            })
+        $jabatan = $request->string('jabatan')->toString();
+        $jenjang = $request->string('jenjang')->toString();
+
+        $pegawai = GlobalFilters::applyToPegawai(
+            Pegawai::query()
+                ->with('user')
+                ->when($request->filled('search'), function ($query, $search) {
+                    $query->where(function ($query) use ($search) {
+                        $query->where('nama', 'like', "%{$search}%")
+                            ->orWhere('nip', 'like', "%{$search}%")
+                            ->orWhere('jabatan', 'like', "%{$search}%");
+                    });
+                }),
+            $jabatan,
+            $jenjang,
+        )
             ->withCount(['targetPelatihan as target_count' => function ($query) {
                 $query->where('status', '!=', 'selesai');
             }, 'riwayatPelatihan as riwayat_count'])
@@ -39,7 +49,11 @@ class AdminPegawaiController extends Controller
 
         return Inertia::render('Admin/Pegawai/Index', [
             'pegawai' => $pegawai,
-            'filters' => ['search' => $request->string('search')->toString()],
+            'filters' => [
+                'search' => $request->string('search')->toString(),
+                'jabatan' => $jabatan,
+                'jenjang' => $jenjang,
+            ],
         ]);
     }
 

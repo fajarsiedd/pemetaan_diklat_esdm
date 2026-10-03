@@ -15,8 +15,11 @@ import {
 import Badge from "@/components/Badge.vue";
 import Pagination from "@/components/Pagination.vue";
 import AppLayout from "@/Layouts/AppLayout.vue";
+import { useGlobalFilters } from "@/composables/useGlobalFilters";
 
 defineOptions({ layout: AppLayout });
+
+const { activeGlobalQuery } = useGlobalFilters();
 
 const props = defineProps({
   pelatihan: { type: Object, required: true },
@@ -47,24 +50,22 @@ const statusVariant = {
 
 const kategoriOptions = Object.keys(kategoriLabels);
 const statusOptions = ["wajib", "opsional"];
-const jabatanOptions = ["Inspektur Ketenagalistrikan", "Penyelidik Bumi"];
 
 const filters = ref({
   search: props.filters.search ?? "",
   kategori: props.filters.kategori ?? "",
   status: props.filters.status ?? "",
-  jabatan: props.filters.jabatan ?? "",
 });
 
-const hasActiveFilters = computed(() =>
-  Object.values(filters.value).some((v) => v !== ""),
+const hasActiveFilters = computed(
+  () => Object.values(filters.value).some((v) => v !== "") || Object.keys(activeGlobalQuery()).length > 0,
 );
 
 let searchTimeout;
 
 const applyFilters = () => {
   clearTimeout(searchTimeout);
-  router.get("/admin/target-pelatihan", { ...filters.value }, { preserveScroll: true, replace: true });
+  router.get("/admin/target-pelatihan", { ...activeGlobalQuery(), ...filters.value }, { preserveScroll: true, replace: true });
 };
 
 watch(
@@ -82,13 +83,12 @@ watch(
     filters.value.search = f.search ?? "";
     filters.value.kategori = f.kategori ?? "";
     filters.value.status = f.status ?? "";
-    filters.value.jabatan = f.jabatan ?? "";
   },
   { deep: true },
 );
 
 const resetFilters = () => {
-  filters.value = { search: "", kategori: "", status: "", jabatan: "" };
+  filters.value = { search: "", kategori: "", status: "" };
 };
 
 const selected = ref(null);
@@ -142,8 +142,8 @@ const selectClass =
         </CardDescription>
       </CardHeader>
       <CardContent class="p-0 sm:p-6">
-        <div class="mb-4 grid grid-cols-1 gap-3 border-b px-4 pb-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div class="flex flex-col gap-1.5 lg:col-span-1">
+        <div class="mb-4 grid grid-cols-1 gap-3 border-b px-4 pb-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="flex flex-col gap-1.5">
             <Label for="filter-search">Cari Pelatihan</Label>
             <div class="relative">
               <Search class="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
@@ -166,20 +166,11 @@ const selectClass =
           </div>
           <div class="flex flex-col gap-1.5">
             <Label for="filter-status">Status</Label>
-            <select id="filter-status" v-model="filters.status" :class="selectClass">
-              <option value="">Semua Status</option>
-              <option value="wajib">Wajib</option>
-              <option value="opsional">Opsional</option>
-            </select>
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <Label for="filter-jabatan">Target Jabatan</Label>
             <div class="flex gap-2">
-              <select id="filter-jabatan" v-model="filters.jabatan" :class="selectClass">
-                <option value="">Semua Jabatan</option>
-                <option v-for="opt in jabatanOptions" :key="opt" :value="opt">
-                  {{ opt }}
-                </option>
+              <select id="filter-status" v-model="filters.status" :class="selectClass">
+                <option value="">Semua Status</option>
+                <option value="wajib">Wajib</option>
+                <option value="opsional">Opsional</option>
               </select>
               <Button
                 v-if="hasActiveFilters"

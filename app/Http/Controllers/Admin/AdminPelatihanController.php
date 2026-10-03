@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Imports\PelatihanImport;
 use App\Models\Pelatihan;
+use App\Support\GlobalFilters;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -16,19 +17,32 @@ class AdminPelatihanController extends Controller
 {
     public function index(Request $request): Response
     {
-        $pelatihan = Pelatihan::query()
-            ->when($request->search, function ($query, $search) {
-                $query->where('judul', 'like', "%{$search}%")
-                    ->orWhere('kode_diklat', 'like', "%{$search}%")
-                    ->orWhere('jenjang', 'like', "%{$search}%");
-            })
+        $jabatan = $request->string('jabatan')->toString();
+        $jenjang = $request->string('jenjang')->toString();
+
+        $pelatihan = GlobalFilters::applyToPelatihan(
+            Pelatihan::query()
+                ->when($request->filled('search'), function ($query, $search) {
+                    $query->where(function ($query) use ($search) {
+                        $query->where('judul', 'like', "%{$search}%")
+                            ->orWhere('kode_diklat', 'like', "%{$search}%")
+                            ->orWhere('jenjang', 'like', "%{$search}%");
+                    });
+                }),
+            $jabatan,
+            $jenjang,
+        )
             ->latest('id')
             ->paginate(10)
             ->withQueryString();
 
         return Inertia::render('Admin/Pelatihan/Index', [
             'pelatihan' => $pelatihan,
-            'filters' => ['search' => $request->string('search')->toString()],
+            'filters' => [
+                'search' => $request->string('search')->toString(),
+                'jabatan' => $jabatan,
+                'jenjang' => $jenjang,
+            ],
         ]);
     }
 

@@ -13,8 +13,8 @@ const appName = page.props.appName;
     </Head>
 
     <div class="mb-6 flex items-center gap-2 text-2xl font-bold tracking-tight text-esdm-charcoal">
-      <img src="/images/logo-esdm.png" class="w-8 h-8" alt="" srcset="">
-      {{ appName }}
+      <img src="/images/logo-esdm.png" class="w-12 h-12" alt="" srcset="">
+      <!-- {{ appName }} -->
     </div>
 
     <slot />

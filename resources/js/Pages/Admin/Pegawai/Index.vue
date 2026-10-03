@@ -14,8 +14,11 @@ import {
 import Badge from "@/components/Badge.vue";
 import Pagination from "@/components/Pagination.vue";
 import AppLayout from "@/Layouts/AppLayout.vue";
+import { useGlobalFilters } from "@/composables/useGlobalFilters";
 
 defineOptions({ layout: AppLayout });
+
+const { activeGlobalQuery } = useGlobalFilters();
 
 const props = defineProps({
   pegawai: { type: Object, required: true },
@@ -32,7 +35,7 @@ watch(search, (value) => {
   searchTimeout = setTimeout(() => {
     router.get(
       "/admin/pegawai",
-      { search: value },
+      { search: value, ...activeGlobalQuery() },
       { preserveState: true, replace: true },
     );
   }, 300);
